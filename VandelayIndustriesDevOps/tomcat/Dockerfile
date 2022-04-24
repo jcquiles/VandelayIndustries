@@ -11,10 +11,7 @@ ENV DEPLOY_DIR /maven
 RUN cd /etc/yum.repos.d/
 RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
 RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
-RUN yum makecache --refresh
-RUN yum -y install expat-devel
-
-RUN yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel -y
+RUN yum install java-1.8.0-openjdk -y
 
 # Get and Unpack Tomcat
 RUN yum -y update && yum -y install wget
