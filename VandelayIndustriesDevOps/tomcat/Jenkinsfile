@@ -1,0 +1,27 @@
+pipeline {
+  agent any
+  stages {
+    stage('Build tomcat 8 image') {
+      steps {
+        sh 'docker build --no-cache -t docker.vandelay.local/tomcat tomcat'
+      }
+    }
+    stage('Push container to registry') {
+      steps {
+        sh 'docker push docker.vandelay.local/tomcat'
+      }
+    }
+  }
+  post {
+    success {
+      slackSend (color: '#00AA00', message: "SUCCESS: ${env.JOB_NAME} - ${env.BUILD_DISPLAY_NAME} (${env.BUILD_URL})")
+    }
+    failure { 
+      slackSend (color: '#AA0000', message: "FAILURE: ${env.JOB_NAME} - ${env.BUILD_DISPLAY_NAME} (${env.BUILD_URL})")
+      emailext (body: "Build ${env.BUILD_DISPLAY_NAME} has failed for reasons.  Please see ${env.BUILD_URL}.", subject: "${env.JOB_NAME} FAILED", to: 'art@vandelay.com') 
+    }    
+    always {
+      cleanWs()
+    }
+  }
+}

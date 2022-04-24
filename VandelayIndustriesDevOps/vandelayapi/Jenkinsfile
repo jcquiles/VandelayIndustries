@@ -1,0 +1,51 @@
+pipeline {
+  agent any
+
+  environment {
+    def scmVars = checkout scm
+    IMAGE='vandelayapi'
+    REGISTRY='docker.vandelay.local'
+    HOST='formalin.vandelay.local'
+  }
+
+  triggers {
+    // Rebuild the API image nightly
+    cron('H 3 * * *')
+  }
+
+  options {
+    // Discard old builds
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+
+  stages {
+    stage('Build the API container') {
+      steps {
+        sh "docker build --no-cache -t ${env.REGISTRY}/${env.IMAGE}:${env.GIT_COMMIT} ."
+        sh "docker tag ${env.REGISTRY}/${env.IMAGE}:${env.GIT_COMMIT} ${env.REGISTRY}/${env.IMAGE}:latest"
+      }
+    }
+    stage('Push container to registry') {
+      steps {
+        sh "docker push ${env.REGISTRY}/${env.IMAGE}:${env.GIT_COMMIT}"
+        sh "docker push ${env.REGISTRY}/${env.IMAGE}:latest"
+      }
+    }
+    stage('Deploy the image') {
+      steps {
+        sh """
+          SRVEXISTS=\$(ssh -i /usr/local/bin/sa_jenkins-id_rsa -o \"StrictHostKeyChecking no\" sa_jenkins@\$HOST \"sudo docker service ls | grep ${env.IMAGE}\" | awk '{ print \$2 }')
+          if [ -z \$SRVEXISTS ]; \
+            then ssh -i /usr/local/bin/sa_jenkins-id_rsa -o \"StrictHostKeyChecking no\" sa_jenkins@\$HOST \"sudo docker service create --name=${env.IMAGE} --replicas=2 -p=8080:8080 --with-registry-auth --update-delay 10s --update-parallelism 1 ${env.REGISTRY}/${env.IMAGE}:latest\";
+            else ssh -i /usr/local/bin/sa_jenkins-id_rsa -o \"StrictHostKeyChecking no\" sa_jenkins@\$HOST \"sudo docker service update -d --with-registry-auth --image ${env.REGISTRY}/${env.IMAGE}:latest ${env.IMAGE}\";
+          fi
+        """
+      }
+    }
+  }
+  post {
+    always {
+      cleanWs()
+    }
+  }
+}
