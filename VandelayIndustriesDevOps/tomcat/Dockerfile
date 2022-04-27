@@ -18,7 +18,7 @@ RUN yum -y update && yum -y install wget
 RUN wget http://archive.apache.org/dist/tomcat/tomcat-8/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz -O /tmp/catalina.tar.gz
 RUN tar xzf /tmp/catalina.tar.gz -C /opt 
 RUN ln -s /opt/apache-tomcat-${TOMCAT_VERSION} /opt/tomcat 
-RUN rm /tmp/catalina.tar.gz
+RUN rm /tmp/catalina.tar.gz 
 
 # Remove unneeded apps
 RUN rm -rf /opt/tomcat/webapps/examples /opt/tomcat/webapps/docs /opt/tomcat/webapps/manager /opt/tomcat/webapps/host-manager 
@@ -39,5 +39,3 @@ RUN chmod +x /opt/apache-tomcat-${TOMCAT_VERSION}/bin/deploy-and-run.sh
 VOLUME ["/maven", "/opt/tomcat/logs", "/opt/tomcat/work", "/opt/tomcat/temp", "/tmp/hsperfdata_root" ]
 
 CMD /opt/tomcat/bin/deploy-and-run.sh
-
-EXPOSE 80 443

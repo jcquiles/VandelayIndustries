@@ -1,4 +1,4 @@
-FROM docker.vandelay.local:tomcat
+FROM docker.vandelay.local/tomcat
 
 MAINTAINER art@vandelayindustries.com
 
